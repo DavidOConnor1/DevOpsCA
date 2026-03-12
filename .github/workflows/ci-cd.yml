@@ -93,7 +93,7 @@ jobs:
       - name: Run tests
         run: npm test
 
- build:
+  build:
   needs: [lint, security-scan, test]  # Includes security scan
   runs-on: ubuntu-latest
   steps:
