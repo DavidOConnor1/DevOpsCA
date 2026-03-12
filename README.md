@@ -1,1 +1,1 @@
-![CI/CD Pipeline](https://github.com/DavidOConnor1/DevOpsCA/actions/workflows/your-file.yml/badge.svg)
+![CI/CD Pipeline](https://github.com/DavidOConnor1/DevOpsCA/actions/workflows/ci-cd.yml/badge.svg)
