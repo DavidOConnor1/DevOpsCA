@@ -5,9 +5,9 @@ export default [
     files: ["**/*.js"],
     languageOptions: {
       ecmaVersion: 2021,
-      sourceType: "script",  // Use "script" for CommonJS (require/module.exports)
+      sourceType: "script",
       globals: {
-        ...globals.node,  
+        ...globals.node,
         ...globals.es2021,
       },
     },
@@ -15,6 +15,15 @@ export default [
       "no-unused-vars": ["error", { 
         argsIgnorePattern: "^(next|req|res|err)$" 
       }],
+    },
+  },
+  // Add this for test files
+  {
+    files: ["test/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.mocha,  // Adds describe, it, before, etc.
+      },
     },
   },
 ];
