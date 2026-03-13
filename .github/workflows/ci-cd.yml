@@ -171,3 +171,27 @@ jobs:
           title: Dev Build ${{ github.sha }}
           tag: dev-${{ github.sha }}
           prerelease: true
+
+  deploy-to-ec2:
+    needs: [release]  # Waits for release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # Only deploy from main
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to EC2
+        run: |
+          ssh ubuntu@${{ secrets.EC2_HOST }} "
+            cd ~/app &&
+            git pull origin main &&
+            npm ci --production &&
+            pm2 restart mathapp --update-env
+          "
