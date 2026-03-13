@@ -36,4 +36,33 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+// SSL Certificate paths from environment variables
+const sslKeyPath = process.env.SSL_KEY_PATH || '/etc/ssl/private/privatekey.pem';
+const sslCertPath = process.env.SSL_CERT_PATH || '/etc/ssl/certs/server.crt';
+
+// Check if SSL certs exist (they will on EC2)
+let httpsServer;
+try {
+  if (fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)) {
+    const privateKey = fs.readFileSync(sslKeyPath, 'utf8');
+    const certificate = fs.readFileSync(sslCertPath, 'utf8');
+    const credentials = { key: privateKey, cert: certificate };
+    
+    httpsServer = https.createServer(credentials, app);
+    httpsServer.listen(process.env.HTTPS_PORT || 443, () => {
+      console.log(`✅ HTTPS Server running on port ${process.env.HTTPS_PORT || 443}`);
+    });
+  } else {
+    console.log('⚠️ SSL certificates not found, running HTTP only');
+  }
+} catch (error) {
+  console.log('⚠️ SSL setup failed:', error.message);
+}
+
+// HTTP server (for redirect or fallback)
+const httpPort = process.env.PORT || 3000;
+app.listen(httpPort, () => {
+  console.log(`✅ HTTP Server running on port ${httpPort}`);
+});
+
 module.exports = app;
