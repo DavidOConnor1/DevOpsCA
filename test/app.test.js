@@ -1,6 +1,11 @@
-//const request = require('supertest');
+// const request = require('supertest');
 const assert = require('assert');
 const app = require('../app');
+let server;
+
+before(function(done) {
+  server = app.listen(3001, done); 
+});
 
 describe('Express App', function() {
   
@@ -44,7 +49,15 @@ describe('Express App', function() {
       );
       assert.ok(hasCookieParser);
     });
-
+  }); 
   
-  });
+}); 
+
+
+after(function(done) {
+  if (server) {
+    server.close(done);
+  } else {
+    done();
+  }
 });
