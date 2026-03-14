@@ -172,7 +172,7 @@ jobs:
           tag: dev-${{ github.sha }}
           prerelease: true
 
-deploy-to-ec2:
+  deploy-to-ec2:
     needs: [release]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
