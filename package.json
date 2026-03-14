@@ -6,7 +6,7 @@
     "start": "node ./bin/www",
     "lint": "eslint .",
     "build": "echo 'EC2 build complete' && npm ci --production",
-    "test": "node_modules/.bin/mocha --reporter mocha-circleci-reporter test/*.js",
+    "test": "node_modules/.bin/mocha --reporter mocha-circleci-reporter test/*.js --exit",
     "dev": "nodemon ./bin/www"
   },
   "dependencies": {
