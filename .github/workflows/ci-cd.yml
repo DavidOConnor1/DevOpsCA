@@ -172,10 +172,10 @@ jobs:
           tag: dev-${{ github.sha }}
           prerelease: true
 
-  deploy-to-ec2:
-    needs: [release]  # Waits for release
+deploy-to-ec2:
+    needs: [release]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Only deploy from main
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -190,8 +190,31 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh ubuntu@${{ secrets.EC2_HOST }} "
-            cd ~/app &&
-            git pull origin main &&
-            npm ci --production &&
-            pm2 restart mathapp --update-env
+            set -e  # Exit on any error
+            
+            echo '🚀 Starting deployment...'
+            cd ~/app || { echo 'App directory not found'; exit 1; }
+            
+            echo 'Pulling latest code...'
+            git pull origin main
+            
+            echo 'Installing production dependencies'
+            npm ci --production
+            
+            echo '🔄 Restarting application...'
+            pm2 restart mathapp --update-env || {
+              echo 'App not running, starting over'
+              pm2 start app.js --name mathapp
+            }
+            
+            echo 'Saving PM2 configuration'
+            pm2 save
+            
+            echo 'Deployment complete!'
           "
+      
+      - name: Health check
+        run: |
+          echo 'Checking application health'
+          sleep 10
+          curl -f -k https://${{ secrets.EC2_HOST }}/health || echo 'Health check endpoint not responding'
