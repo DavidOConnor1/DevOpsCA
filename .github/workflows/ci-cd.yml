@@ -189,7 +189,7 @@ deploy-to-ec2:
       
       - name: Deploy to EC2
         run: |
-          ssh ubuntu@${{ secrets.EC2_HOST }} "
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -e  # Exit on any error
             
             echo '🚀 Starting deployment...'
