@@ -187,34 +187,49 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
       
-      - name: Deploy to EC2
+      - name: Deploy SSL certificates to EC2
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            set -e  # Exit on any error
+            # Create SSL directories if they don't exist
+            sudo mkdir -p /etc/ssl/private /etc/ssl/certs
+            
+            # Write certificates from GitHub Secrets
+            echo '${{ secrets.SSL_CERT }}' | sudo tee /etc/ssl/certs/server.crt
+            echo '${{ secrets.SSL_PRIVATE_KEY }}' | sudo tee /etc/ssl/private/privatekey.pem
+            
+            # Set permissions
+            sudo chmod 600 /etc/ssl/private/privatekey.pem
+            sudo chmod 644 /etc/ssl/certs/server.crt
+          "
+      
+      - name: Deploy application
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            set -e
             
             echo '🚀 Starting deployment...'
-            cd ~/app || { echo 'App directory not found'; exit 1; }
+            cd ~/app || { echo '❌ App directory not found'; exit 1; }
             
-            echo 'Pulling latest code...'
+            echo '📦 Pulling latest code...'
             git pull origin main
             
             echo 'Installing production dependencies'
             npm ci --production
             
-            echo '🔄 Restarting application...'
+            echo 'Restarting application'
             pm2 restart mathapp --update-env || {
-              echo 'App not running, starting over'
+              echo 'App not running, starting fresh'
               pm2 start app.js --name mathapp
             }
             
             echo 'Saving PM2 configuration'
             pm2 save
             
-            echo 'Deployment complete!'
+            echo '✅ Deployment complete!'
           "
       
       - name: Health check
         run: |
-          echo 'Checking application health'
+          echo '🔍 Checking application health'
           sleep 10
           curl -f -k https://${{ secrets.EC2_HOST }}/health || echo 'Health check endpoint not responding'
