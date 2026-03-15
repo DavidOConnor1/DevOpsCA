@@ -36,4 +36,41 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    // First try environment variables 
+    let privateKey, certificate;
+    
+    if (process.env.SSL_PRIVATE_KEY && process.env.SSL_CERT) {
+      console.log('🔐 Using SSL certificates from environment variables');
+      privateKey = process.env.SSL_PRIVATE_KEY;
+      certificate = process.env.SSL_CERT;
+    } 
+    // Fallback to filesystem (EC2 with physical files)
+    else if (process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH) {
+      console.log('🔐 Using SSL certificates from filesystem');
+      privateKey = fs.readFileSync(process.env.SSL_KEY_PATH, 'utf8');
+      certificate = fs.readFileSync(process.env.SSL_CERT_PATH, 'utf8');
+    }
+    
+    if (privateKey && certificate) {
+      https.createServer({ key: privateKey, cert: certificate }, app)
+        .listen(process.env.HTTPS_PORT || 443, () => {
+          console.log('✅ HTTPS Server running');
+        });
+    } else {
+      console.log('No SSL certificates found - running HTTP only');
+    }
+  } catch (error) {
+    console.log('SSL setup skipped:', error.message);
+  }
+}
+
+// HTTP server 
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`✅ HTTP Server running on port ${port}`);
+});
+
 module.exports = app;
