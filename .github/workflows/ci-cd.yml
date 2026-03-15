@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, feature/ci-setup ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
     types: [ opened, synchronize ]
