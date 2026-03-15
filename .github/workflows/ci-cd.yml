@@ -183,11 +183,11 @@ jobs:
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}  # ← Fixed indentation here
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
     
       - name: Add EC2 host to known_hosts
         run: |
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts  # ← Fixed indentation here
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
     
       - name: Deploy application
         run: |
@@ -195,21 +195,21 @@ jobs:
             set -e
             
             echo 'Starting deployment...'
-            cd ~/app || { echo '❌ App directory not found'; exit 1; }
+            cd ~/DevOpsCA || { echo '❌ App directory not found'; exit 1; }
             
             echo 'Pulling latest code...'
             git pull origin main
             
-            echo 'Installing production dependencies'
+            echo '🔧 Installing production dependencies...'
             npm ci --production
             
-            echo 'Restarting application'
-            pm2 restart mathapp --update-env || {
-              echo 'App not running, starting fresh'
-              pm2 start app.js --name mathapp
+            echo '🔄 Restarting application...'
+            pm2 restart example_app --update-env || {
+              echo 'App not running, starting fresh...'
+              pm2 start ./bin/www --name example_app --env=production
             }
             
-            echo 'Saving PM2 configuration'
+            echo '💾 Saving PM2 configuration...'
             pm2 save
             
             echo 'Deployment complete!'
@@ -217,6 +217,6 @@ jobs:
       
       - name: Health check
         run: |
-          echo 'Checking application health'
+          echo '🔍 Checking application health...'
           sleep 10
-          curl -f -k https://${{ secrets.EC2_HOST }}/health || echo 'Health check endpoint not responding'
+          curl -f -k http://${{ secrets.EC2_HOST }}:8080/ || echo 'Health check endpoint not responding'
