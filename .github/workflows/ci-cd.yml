@@ -179,38 +179,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Setup SSH key
+
+        - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+    
+      - name: Add EC2 host to known_hosts
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-      
-      - name: Deploy SSL certificates to EC2
-        run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            # Create SSL directories if they don't exist
-            sudo mkdir -p /etc/ssl/private /etc/ssl/certs
-            
-            # Write certificates from GitHub Secrets
-            echo '${{ secrets.SSL_CERT }}' | sudo tee /etc/ssl/certs/server.crt
-            echo '${{ secrets.SSL_PRIVATE_KEY }}' | sudo tee /etc/ssl/private/privatekey.pem
-            
-            # Set permissions
-            sudo chmod 600 /etc/ssl/private/privatekey.pem
-            sudo chmod 644 /etc/ssl/certs/server.crt
-          "
-      
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+    
+    
       - name: Deploy application
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -e
             
-            echo '🚀 Starting deployment...'
+            echo 'Starting deployment...'
             cd ~/app || { echo '❌ App directory not found'; exit 1; }
             
-            echo '📦 Pulling latest code...'
+            echo 'Pulling latest code...'
             git pull origin main
             
             echo 'Installing production dependencies'
@@ -225,11 +213,11 @@ jobs:
             echo 'Saving PM2 configuration'
             pm2 save
             
-            echo '✅ Deployment complete!'
+            echo 'Deployment complete!'
           "
       
       - name: Health check
         run: |
-          echo '🔍 Checking application health'
+          echo 'Checking application health'
           sleep 10
           curl -f -k https://${{ secrets.EC2_HOST }}/health || echo 'Health check endpoint not responding'
